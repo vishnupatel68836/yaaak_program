@@ -1,0 +1,65 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX 100
+
+char stack[MAX];
+int top = -1;
+
+void push(char ch) {
+    stack[++top] = ch;
+}
+
+char pop() {
+    if (top == -1) return '\0';
+    return stack[top--];
+}
+
+char peek() {
+    if (top == -1) return '\0';
+    return stack[top];
+}
+
+int precedence(char op) {
+    switch(op) {
+        case '^': return 3;
+        case '*':
+        case '/': return 2;
+        case '+':
+        case '-': return 1;
+        default : return 0;
+    }
+}
+
+int isOperator(char ch) {
+    return ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^';
+}
+%}
+
+%%
+
+[0-9a-zA-Z]+   { printf("%s ", yytext); }  // Operand: print directly
+
+[+\-*/^]       {
+                  while (precedence(peek()) >= precedence(yytext[0])) {
+                      printf("%c ", pop());
+                  }
+                  push(yytext[0]);
+              }
+
+"("            { push('('); }
+
+")"            {
+                  while (peek() != '(' && top != -1) {
+                      printf("%c ", pop());
+                  }
+                  if (peek() == '(')
+                      pop(); // remove '('
+              }
+
+[\n]           {
+                  while (top != -1) {
+                      printf("%c ", pop());
